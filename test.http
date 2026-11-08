@@ -1,0 +1,63 @@
+@host = http://localhost:3000
+
+### Главная страница
+GET {{host}}/
+
+### О приложении
+GET {{host}}/about
+
+### Все задачи
+GET {{host}}/api/tasks
+
+### Только выполненные
+GET {{host}}/api/tasks?completed=true
+
+### Только невыполненные
+GET {{host}}/api/tasks?completed=false
+
+### Создать задачу (201)
+POST {{host}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Сделать лабораторную работу"
+}
+
+### Создать вторую задачу
+POST {{host}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Подключить service worker"
+}
+
+### Ошибка: нет title (400)
+POST {{host}}/api/tasks
+Content-Type: application/json
+
+{}
+
+### Ошибка: пустой title (400)
+POST {{host}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "   "
+}
+
+### Ошибка: title не строка (400)
+POST {{host}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": 123
+}
+
+### Несуществующий маршрут (404)
+GET {{host}}/api/unknown
+
+### PWA: манифест
+GET {{host}}/manifest.json
+
+### PWA: service worker
+GET {{host}}/sw.js

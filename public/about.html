@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>О приложении — Менеджер задач</title>
+  <meta name="description" content="Описание приложения и использованных технологий">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/icons/ico_192.png">
+  <link rel="apple-touch-icon" href="/icons/ico_192.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header__inner">
+      <a class="brand" href="/">
+        <img src="/icons/ico_192.png" alt="" width="32" height="32">
+        <span>Менеджер задач</span>
+      </a>
+      <nav class="nav">
+        <a href="/" class="nav__link">Задачи</a>
+        <a href="/about" class="nav__link nav__link--active" aria-current="page">О приложении</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h1 class="card__title">О приложении</h1>
+      <p>
+        Менеджер задач — учебное веб-приложение для лабораторной работы №6
+        (вариант 8). Серверная часть написана на Node.js с фреймворком Express,
+        клиентская — на чистых HTML, CSS и JavaScript.
+      </p>
+
+      <h2 class="card__title">Возможности</h2>
+      <ul class="list">
+        <li>просмотр списка задач и фильтрация по статусу;</li>
+        <li>добавление новых задач через форму;</li>
+        <li>работа офлайн за счёт service worker;</li>
+        <li>установка на устройство как PWA.</li>
+      </ul>
+
+      <h2 class="card__title">API</h2>
+      <table class="table">
+        <thead>
+          <tr><th>Метод</th><th>Путь</th><th>Описание</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GET</td><td><code>/</code></td><td>Главная страница</td></tr>
+          <tr><td>GET</td><td><code>/about</code></td><td>Эта страница</td></tr>
+          <tr><td>GET</td><td><code>/api/tasks</code></td><td>Список задач, фильтр <code>?completed=true|false</code></td></tr>
+          <tr><td>POST</td><td><code>/api/tasks</code></td><td>Создание задачи, тело <code>{ "title": "..." }</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="card__title">Технологии</h2>
+      <p>Node.js, Express, Fetch API, Service Worker, Web App Manifest.</p>
+
+      <p><a class="btn btn--link" href="/">← К списку задач</a></p>
+    </section>
+  </main>
+
+</body>
+</html>
