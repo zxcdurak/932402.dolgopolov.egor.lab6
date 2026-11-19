@@ -1,6 +1,8 @@
-const CACHE_NAME = 'pwa-version-1';
+const CACHE_NAME = 'pwa-version-4';
 
 const assets = [
+    '/',
+    '/about',
     '/css/style.css',
     '/icons/ico_192.png',
     '/icons/ico_512.png',
@@ -10,55 +12,50 @@ const assets = [
     '/manifest.json',
 ];
 
-self.addEventListener('install', (event) => {
-    console.log('Service worker установлен');
-});
-
-self.addEventListener('activate', (event) => {
-    console.log('Service worker активирован');
-});
-
-self.addEventListener('install', (evt) => {
-    evt.waitUntil(
-        self.skipWaiting().then(() => {
-            return caches.open(CACHE_NAME)
-                .then((cache) => {
-                    return cache.addAll(assets)
-                        .catch(err => {
-                            console.log('Failed to cache assets:', err)
-                        })
-                })
-        })
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(assets))
+            .then(() => self.skipWaiting())
     );
 });
 
-self.addEventListener('activate', (evt) => {
-    evt.waitUntil(
-        clients.claim().then(() => {
-            return caches.keys().then(keys => {
-                return Promise.all(
-                    keys.filter(key => key !== CACHE_NAME)
-                        .map(key => caches.delete(key))
-                );
-            })
-        })
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys()
+            .then(keys => Promise.all(
+                keys.filter(key => key.startsWith('pwa-version-') && key !== CACHE_NAME)
+                    .map(key => caches.delete(key))
+            ))
+            .then(() => self.clients.claim())
     );
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Если ресурс найден в кэше, возвращаем его
-        if (response) {
-          return response;
+    const url = new URL(event.request.url);
+    if (event.request.method !== 'GET' || url.origin !== self.location.origin ||
+        url.pathname.startsWith('/api/')) return;
+
+    event.respondWith((async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(event.request);
+        if (cached) return cached;
+
+        // Navigation query parameters do not change these static pages.
+        if (event.request.mode === 'navigate') {
+            const pages = {
+                '/': '/index.html',
+                '/index.html': '/index.html',
+                '/about': '/about.html',
+                '/about.html': '/about.html',
+            };
+            if (pages[url.pathname]) {
+                const page = await cache.match(pages[url.pathname]);
+                if (page) return page;
+            }
         }
 
-        // Если ресурс не найден в кэше, пытаемся получить его из сети
-        return fetch(event.request).catch(() => {
-          // Если запрос не удался (например, оффлайн), возвращаем резервную страницу
-          return caches.match('./fallback.html');
-        });
-      })
-  );
+        return fetch(event.request);
+    })());
 });
+

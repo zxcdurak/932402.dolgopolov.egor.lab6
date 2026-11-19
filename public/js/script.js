@@ -58,24 +58,51 @@
     counter.textContent = tasks.length + " " + plural(tasks.length);
   }
 
+  const SAVED_TASKS = "saved-tasks";
+  const LOCAL_TASKS = "local-tasks";
+
+  function readTasks(key) {
+    let tasks = JSON.parse(localStorage.getItem(key) || "[]");
+    if (key === LOCAL_TASKS) {
+      tasks.forEach((task, index) => { task.id = "local-" + (index + 1); });
+      localStorage.setItem(key, JSON.stringify(tasks));
+    }
+    return tasks;
+  }
+
   async function loadTasks() {
-    let url = filter === "all" ? API : API + "?completed=" + filter;
+    let tasks;
     try {
-      let res = await fetch(url);
+      let res = await fetch(API);
       if (!res.ok) throw new Error("HTTP " + res.status);
-      render(await res.json());
+      tasks = await res.json();
+      localStorage.setItem(SAVED_TASKS, JSON.stringify(tasks));
       setText(loadError, "");
     } catch (err) {
-      setText(loadError, "Не удалось загрузить задачи. Проверьте соединение.");
+      tasks = readTasks(SAVED_TASKS);
+      setText(loadError, "Сервер недоступен. Показаны сохранённые задачи.");
     }
+    tasks = tasks.concat(readTasks(LOCAL_TASKS));
+    render(filter === "all" ? tasks : tasks.filter(t => String(t.completed) === filter));
   }
 
   async function addTask(title) {
-    let res = await fetch(API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: title })
-    });
+    let res;
+    try {
+      res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title })
+      });
+    } catch (err) {
+      // Локальные задачи остаются в браузере и не отправляются на сервер.
+      let tasks = readTasks(LOCAL_TASKS);
+      let nextId = tasks.reduce((max, task) => Math.max(max, Number(String(task.id).replace("local-", "")) || 0), 0) + 1;
+      let task = { id: "local-" + nextId, title: title, completed: false };
+      tasks.push(task);
+      localStorage.setItem(LOCAL_TASKS, JSON.stringify(tasks));
+      return task;
+    }
     let data = await res.json().catch(function () { return {}; });
     if (!res.ok) throw new Error(data.error || "Ошибка сервера");
     return data;
@@ -144,10 +171,11 @@ if ('serviceWorker' in navigator) {
               console.log('New service worker version available.');
 
               // Опционально: показать уведомление пользователю
-              showUpdateNotification();
+              // Обновление применится после перезагрузки страницы.
             }
           };
         };
       })
       .catch(err => console.log('service worker not registered', err));
   }
+
